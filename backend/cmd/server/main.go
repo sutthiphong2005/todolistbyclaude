@@ -46,8 +46,12 @@ func main() {
 
 	r := gin.Default()
 
+	allowOrigins := []string{"http://localhost:5173", "http://localhost:5174", "http://localhost:5175"}
+	if frontendURL := os.Getenv("FRONTEND_URL"); frontendURL != "" {
+		allowOrigins = append(allowOrigins, frontendURL)
+	}
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5174", "http://localhost:5175"},
+		AllowOrigins:     allowOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
