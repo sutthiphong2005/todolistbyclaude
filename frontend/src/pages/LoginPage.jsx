@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import client from '../api/client'
 
 export default function LoginPage({ onLogin }) {
   const [username, setUsername] = useState('')
@@ -12,7 +12,7 @@ export default function LoginPage({ onLogin }) {
     setError('')
     setLoading(true)
     try {
-      const { data } = await axios.post('/api/auth/login', { username, password })
+      const { data } = await client.post('/auth/login', { username, password })
       localStorage.setItem('token', data.token)
       onLogin(data.user)
     } catch (err) {
