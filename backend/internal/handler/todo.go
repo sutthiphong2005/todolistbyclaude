@@ -20,12 +20,33 @@ func NewTodoHandler(todoRepo *repository.TodoRepository) *TodoHandler {
 
 func (h *TodoHandler) List(c *gin.Context) {
 	userID := c.GetInt("user_id")
-	todos, err := h.todoRepo.FindAllByUser(userID)
+
+	limit := 10
+	offset := 0
+	if v, err := strconv.Atoi(c.Query("limit")); err == nil && v > 0 && v <= 100 {
+		limit = v
+	}
+	if v, err := strconv.Atoi(c.Query("offset")); err == nil && v >= 0 {
+		offset = v
+	}
+
+	todos, err := h.todoRepo.FindPageByUser(userID, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch todos"})
 		return
 	}
-	c.JSON(http.StatusOK, todos)
+	total, err := h.todoRepo.CountByUser(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not count todos"})
+		return
+	}
+	c.JSON(http.StatusOK, model.TodosPage{
+		Items:   todos,
+		Total:   total,
+		Limit:   limit,
+		Offset:  offset,
+		HasMore: offset+len(todos) < total,
+	})
 }
 
 func (h *TodoHandler) Create(c *gin.Context) {

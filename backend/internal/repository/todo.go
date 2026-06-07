@@ -15,10 +15,13 @@ func NewTodoRepository(db *sql.DB) *TodoRepository {
 	return &TodoRepository{db: db}
 }
 
-func (r *TodoRepository) FindAllByUser(userID int) ([]model.Todo, error) {
+func (r *TodoRepository) FindPageByUser(userID, limit, offset int) ([]model.Todo, error) {
 	rows, err := r.db.Query(
-		`SELECT id, user_id, title, completed, created_at, updated_at FROM todos WHERE user_id = $1 ORDER BY created_at DESC`,
-		userID,
+		`SELECT id, user_id, title, completed, created_at, updated_at
+		 FROM todos WHERE user_id = $1
+		 ORDER BY created_at DESC
+		 LIMIT $2 OFFSET $3`,
+		userID, limit, offset,
 	)
 	if err != nil {
 		return nil, err
@@ -37,6 +40,12 @@ func (r *TodoRepository) FindAllByUser(userID int) ([]model.Todo, error) {
 		todos = []model.Todo{}
 	}
 	return todos, nil
+}
+
+func (r *TodoRepository) CountByUser(userID int) (int, error) {
+	var count int
+	err := r.db.QueryRow(`SELECT COUNT(*) FROM todos WHERE user_id = $1`, userID).Scan(&count)
+	return count, err
 }
 
 func (r *TodoRepository) FindByID(id, userID int) (*model.Todo, error) {

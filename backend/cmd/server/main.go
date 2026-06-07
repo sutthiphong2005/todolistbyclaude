@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -29,11 +30,19 @@ func main() {
 		log.Fatalf("failed to connect to db: %v", err)
 	}
 
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = filepath.Join(".", "uploads")
+	}
+	os.MkdirAll(uploadDir, 0755)
+
 	userRepo := repository.NewUserRepository(db)
 	todoRepo := repository.NewTodoRepository(db)
+	attachRepo := repository.NewAttachmentRepository(db)
 
 	authHandler := handler.NewAuthHandler(userRepo)
 	todoHandler := handler.NewTodoHandler(todoRepo)
+	attachHandler := handler.NewAttachmentHandler(attachRepo, todoRepo, uploadDir)
 
 	r := gin.Default()
 
@@ -53,6 +62,11 @@ func main() {
 		api.POST("/todos", todoHandler.Create)
 		api.PATCH("/todos/:id", todoHandler.Update)
 		api.DELETE("/todos/:id", todoHandler.Delete)
+
+		api.GET("/todos/:id/attachments", attachHandler.List)
+		api.POST("/todos/:id/attachments", attachHandler.Upload)
+		api.GET("/todos/:id/attachments/:aid/download", attachHandler.Download)
+		api.DELETE("/todos/:id/attachments/:aid", attachHandler.Delete)
 	}
 
 	port := os.Getenv("PORT")

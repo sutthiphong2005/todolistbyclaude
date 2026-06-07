@@ -1,6 +1,7 @@
 # Backend
 backend/server
 backend/*.exe
+backend/uploads/
 
 # Frontend
 frontend/node_modules/
